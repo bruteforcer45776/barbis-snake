@@ -480,10 +480,10 @@ function tick() {
 function gameWin() {
   running = false;
   clearInterval(loop);
-  // Genera codice univoco: timestamp base36 + 4 caratteri casuali
-  var ts = Date.now().toString(36).toUpperCase();
-  var rnd = Math.random().toString(36).substr(2, 4).toUpperCase();
-  var code = 'BS-' + ts + '-' + rnd;
+  // Contatore progressivo salvato in localStorage
+  var counter = parseInt(localStorage.getItem('bb_win_counter') || '0', 10) + 1;
+  localStorage.setItem('bb_win_counter', counter);
+  var code = 'BB-' + String(counter).padStart(4, '0');
   document.getElementById('winCode').textContent = '# ' + code;
   show('winScreen');
 }
