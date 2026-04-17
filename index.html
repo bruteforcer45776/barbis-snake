@@ -477,15 +477,26 @@ function tick() {
   draw();
 }
 
+var API_URL = 'https://8090-i9yolh8eaun36bwfp1yqc-c554a317.us2.manus.computer';
+
 function gameWin() {
   running = false;
   clearInterval(loop);
-  // Contatore progressivo salvato in localStorage
-  var counter = parseInt(localStorage.getItem('bb_win_counter') || '0', 10) + 1;
-  localStorage.setItem('bb_win_counter', counter);
-  var code = 'BB-' + String(counter).padStart(4, '0');
-  document.getElementById('winCode').textContent = '# ' + code;
+  // Mostra schermata vittoria subito con codice in caricamento
+  document.getElementById('winCode').textContent = '# ...';
   show('winScreen');
+  // Chiama il backend globale per ottenere il codice univoco
+  fetch(API_URL + '/increment')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      document.getElementById('winCode').textContent = '# ' + d.code;
+    })
+    .catch(function() {
+      // Fallback locale se il server non risponde
+      var c = parseInt(localStorage.getItem('bb_win_counter') || '0', 10) + 1;
+      localStorage.setItem('bb_win_counter', c);
+      document.getElementById('winCode').textContent = '# BB-' + String(c).padStart(4, '0');
+    });
 }
 
 function gameOver() {
