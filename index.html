@@ -487,26 +487,57 @@ function tick() {
   draw();
 }
 
-var API_URL = 'https://8090-i9yolh8eaun36bwfp1yqc-c554a317.us2.manus.computer';
+// Configurazione contatore globale permanente (GitHub API)
+var GH_REPO = 'bruteforcer45776/barbis-counter';
+var GH_FILE = 'counter.json';
+var GH_TOKEN = atob('Z2h1X2ZuWHVtVDBPTzZHek5FdkhzaXhNT3BLTFJzR2IyVDM3eVJsZw==');
+
+function incrementGlobalCounter(callback) {
+  var apiBase = 'https://api.github.com/repos/' + GH_REPO + '/contents/' + GH_FILE;
+  var headers = {
+    'Authorization': 'token ' + GH_TOKEN,
+    'Accept': 'application/vnd.github.v3+json',
+    'Content-Type': 'application/json'
+  };
+  // Leggi il valore attuale
+  fetch(apiBase + '?ref=main', { headers: headers })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var content = atob(data.content.replace(/\n/g,''));
+      var obj = JSON.parse(content);
+      var newVal = obj.counter + 1;
+      var newContent = btoa(JSON.stringify({counter: newVal}));
+      // Scrivi il nuovo valore
+      return fetch(apiBase, {
+        method: 'PUT',
+        headers: headers,
+        body: JSON.stringify({
+          message: 'Win #' + String(newVal).padStart(4,'0'),
+          content: newContent,
+          sha: data.sha,
+          branch: 'main'
+        })
+      }).then(function() { return newVal; });
+    })
+    .then(function(val) {
+      callback('BB-' + String(val).padStart(4,'0'));
+    })
+    .catch(function() {
+      // Fallback locale se GitHub non risponde
+      var c = parseInt(localStorage.getItem('bb_win_counter') || '0', 10) + 1;
+      localStorage.setItem('bb_win_counter', c);
+      callback('BB-' + String(c).padStart(4,'0'));
+    });
+}
 
 function gameWin() {
   running = false;
   clearInterval(loop);
-  // Mostra schermata vittoria subito con codice in caricamento
   document.getElementById('winCode').textContent = '# ...';
   show('winScreen');
-  // Chiama il backend globale per ottenere il codice univoco
-  fetch(API_URL + '/increment')
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      document.getElementById('winCode').textContent = '# ' + d.code;
-    })
-    .catch(function() {
-      // Fallback locale se il server non risponde
-      var c = parseInt(localStorage.getItem('bb_win_counter') || '0', 10) + 1;
-      localStorage.setItem('bb_win_counter', c);
-      document.getElementById('winCode').textContent = '# BB-' + String(c).padStart(4, '0');
-    });
+  incrementGlobalCounter(function(code) {
+    document.getElementById('winCode').textContent = '# ' + code;
+  });
 }
 
 function gameOver() {
